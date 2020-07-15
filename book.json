@@ -1,0 +1,78 @@
+{
+  "title": "java高级知识",
+  "description": "java知识总结",
+  "language": "zh-hans",
+  "root":"./doc",
+  "plugins": [
+    "code",
+    "-search",
+    "search-pro",
+    "github",
+    "splitter",
+    "tbfed-pagefooter",
+    "donate",
+    "-sharing",
+    "sharing-plus",
+    "prism",
+    "-highlight",
+    "styles-less",
+    "multipart",
+    "ancre-navigation",
+    "pageview-count",
+    "popup",
+    "back-to-top-button",
+    "chapter-fold",
+    "sectionx"
+  ],
+  "styles": {
+    "website": "styles/website.css"
+  },
+  "pluginsConfig": {
+    "theme-default": {
+      "showLevel": false
+    },
+    "tbfed-pagefooter": {
+      "copyright": "",
+      "modify_label": "该文件修订时间：",
+      "modify_format": "YYYY-MM-DD HH:mm:ss"
+    },
+    "fontsettings": {
+      "theme": "white",
+      "family": "serif",
+      "size": 12
+    },
+    "donate": {
+      "wechat": "/assets/images/wxpay.png",
+      "alipay": "/assets/images/alipay.png",
+      "title": "",
+      "button": "赏",
+      "alipayText": "支付宝打赏",
+      "wechatText": "微信打赏"
+    },
+    "links": {
+      "gitbook": false,
+      "sharing": {
+        "google": false,
+        "facebook": false,
+        "twitter": false,
+        "all": false
+      }
+    },
+    "code": {
+      "copyButtons": true
+    },
+    "github": {
+      "url": "https://github.com/webChatContact/baas-v2-help"
+    },
+    "editlink": {
+      "base": "https://github.com/webChatContact",
+      "label": "编辑本页面"
+    },
+    "baidu": {
+      "token": "a9787f0ab45d5e237bab522431d0a7ec"
+    },
+    "sitemap": {
+      "hostname": "http://baidu.com/"
+    }
+  }
+}

@@ -1,0 +1,1 @@
+{"name":"Java-advanced","tagline":"java高级知识的学习","body":"# 使用\r\n\r\n## 1. 本地环境安装\r\n- 安装node.js\r\n- npm install gitbook-cli -g\r\n\r\n## 2. 运行项目\r\n* git init 初始化一下项目\r\n* git install -y 安装下插件\r\n* git serve启动项目默认是4000端口\r\n* 启动之后访问localhost:4000","note":"Don't delete this file! It's used internally to help with page regeneration."}

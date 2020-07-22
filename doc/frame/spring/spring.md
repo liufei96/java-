@@ -1030,7 +1030,64 @@ public class AopMain {
 }
 ```
 
+事务的回滚
 
+```java
+@AfterThrowing("execution(* com.liufei.spring.service.*.*.*(..))")
+public void afterThrow() {
+  // 回滚事务
+  transactionUtils.rollback();
+}
+```
+
+```java
+
+/***
+* @Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE) 加上这个编程多列
+* private TransactionStatus transaction;  把这个全局事务状态提取出来。
+*/
+@Component
+@Scope(value = ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+public class TransactionUtils {
+
+	@Autowired
+	private DataSourceTransactionManager dataSourceTransactionManager;
+
+	// 全局接收事务状态，可能会有线程安全问题。所以讲此类定义为多例
+	private TransactionStatus transaction;
+
+	// 开启事务
+	public TransactionStatus begin() {
+		System.out.println("开启事物");
+		transaction = dataSourceTransactionManager.getTransaction(new DefaultTransactionAttribute());
+		return transaction;
+	}
+
+	// 提交事务
+	public void commit(TransactionStatus transactionStatus) {
+		System.out.println("提交事物");
+		dataSourceTransactionManager.commit(transactionStatus);
+	}
+
+	// 回滚事务
+	public void rollback() {
+		if (transaction != null) {
+			dataSourceTransactionManager.rollback(transaction);
+			System.out.println("回滚事务");
+		}
+	}
+}
+```
+
+**提醒自己：**
+
+1、**如果事务中所有sql语句执行正确则需要自己手动提交commit；否则有任何一条执行错误，需要自己提交一条rollback，这时会回滚所有操作，而不是commit会给你自动判断和回滚。**
+
+2、**新开一个事务会将该连接中的其他未提交的事务提交，相当于commit！**
+
+3、**事务既没有提交也没有回滚时连接断开数据库会自动回滚**
+
+4、**事务中，update语句如果没有commit的话，你再重新执行update语句，就会等待锁定，当等待时间过长的时候，就会报ERROR 1205 (HY000): Lock wait timeout exceeded; try restarting transaction的错误。**
 
 ## Spring事物传播行为
 
@@ -1038,17 +1095,95 @@ Spring中事务的定义：
 
 Propagation（key属性确定代理应该给哪个方法增加事务行为。这样的属性最重要的部份是传播行为。）有以下选项可供使用：
 
-PROPAGATION_REQUIRED--支持当前事务，如果当前没有事务，就新建一个事务。这是最常见的选择。
+| 事务传播行为类型          | 说明                                                         |
+| ------------------------- | ------------------------------------------------------------ |
+| PROPAGATION_REQUIRED      | 如果当前没有事务，就新建一个事务，如果已经存在一个事务中，加入到这个事务中。这是最常见的选择。**（默认）** |
+| PROPAGATION_SUPPORTS      | 支持当前事务，如果当前没有事务，就以非事务方式执行。（就是如果外层没有事务，内层也不会执行事务） |
+| PROPAGATION_MANDATORY     | 使用当前的事务，如果当前没有事务，就抛出异常。               |
+| PROPAGATION_REQUIRES_NEW  | 新建事务，如果当前存在事务，把当前事务挂起。                 |
+| PROPAGATION_NOT_SUPPORTED | 以非事务方式执行操作，如果当前存在事务，就把当前事务挂起。   |
+| PROPAGATION_NEVER         | 以非事务方式执行，如果当前存在事务，则抛出异常。             |
+| PROPAGATION_NESTED        | 如果当前存在事务，则在嵌套事务内执行。如果当前没有事务，则执行与PROPAGATION_REQUIRED类似的操作。 |
 
-PROPAGATION_SUPPORTS--支持当前事务，如果当前没有事务，就以非事务方式执行。
+案例：
 
-PROPAGATION_MANDATORY--支持当前事务，如果当前没有事务，就抛出异常。 
+当我们调用接口的时候，在调用接口前，需要写入记录，但是调用接口失败的时候，记录一样写入，而不是依赖后续的操作。
 
-PROPAGATION_REQUIRES_NEW--新建事务，如果当前存在事务，把当前事务挂起。 
+```java
+@Repository
+public class LogDao {
 
-PROPAGATION_NOT_SUPPORTED--以非事务方式执行操作，如果当前存在事务，就把当前事务挂起。 
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
-PROPAGATION_NEVER--以非事务方式执行，如果当前存在事务，则抛出异常。
+    public void addLog(String name) {
+        String sql = "insert log(name) values(?)";
+        int update = jdbcTemplate.update(sql, name);
+        System.out.println("insert log result:" + update);
+    }
+}
+```
+
+```java
+public interface LogService {
+    void addLog();
+}
+
+@Service
+public class LogServiceImpl implements LogService {
+
+    @Autowired
+    private LogDao logDao;
+
+    @Override
+    @Transactional
+    public void addLog() {
+        logDao.addLog("addLog" + System.currentTimeMillis());
+    }
+}
+```
+
+```JAVA
+@Service
+public class UserServiceImpl implements UserService {
+
+    @Autowired
+    private UserDao userDao;
+
+    @Autowired
+    private LogService logService;
+
+    @Override
+    @Transactional
+    public void insert() {
+        logService.addLog();
+        userDao.insert("liufei");
+        System.out.println("===============");
+        int i = 1 / 0;
+        userDao.insert("lihuihui");
+    }
+}
+```
+
+PROPAGATION_REQUIRED 默认事务是这个传播行为。如果当前没有事务，就新建一个事务，如果已经存在一个事务中，加入到这个事务中。这是最常见的选择。
+
+当执行insert()方法时，因为有一个事务，在执行到addLog()方法时，就不会新建一个事务，导致两个操作是由依赖关系的。
+
+如果insert()后面出现异常，就会回滚，则此时添加日志操作也会被回滚。
+
+修改事务的传播行为。
+
+```java
+@Override
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+public void addLog() {
+    logDao.addLog("addLog" + System.currentTimeMillis());
+}
+```
+
+这样当插入user数据出现异常的时候，日志还是会正常写入的。
+
+
 
 ## SpringMVC的执行流程
 

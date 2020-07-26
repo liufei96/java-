@@ -1143,7 +1143,7 @@ public class LogServiceImpl implements LogService {
 }
 ```
 
-```JAVA
+```java
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -1198,5 +1198,3 @@ public void addLog() {
 （4）DipatcherServlet根据返回的ModelAndView，选择一个合适的ViewResolver（必须已经注入到Spring容器中的ViewResolver）（***\*选择ViewResolver）\****
 
 （5）通过ViewResolver结合Model和View，来渲染视图，DispatcherServlet将渲染的结果返回客户端。***\*（渲染返回）\****
-
-## XML技术

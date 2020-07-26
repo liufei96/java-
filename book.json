@@ -20,9 +20,9 @@
     "ancre-navigation",
     "pageview-count",
     "popup",
-    "back-to-top-button",
     "chapter-fold",
-    "sectionx"
+    "sectionx",
+    "toc"
   ],
   "styles": {
     "website": "styles/website.css"
